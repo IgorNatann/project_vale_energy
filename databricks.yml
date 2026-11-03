@@ -7,6 +7,17 @@ bundle:
 include:
   - resources/*.yml
 
+# Os Parquet sobem para o volume raw.landing, não com o bundle.
+sync:
+  exclude:
+    - data/**
+    - skill/**
+
+# O isolamento entre dev e prod é feito pelo catálogo: os schemas mantêm o nome da camada
+# nos dois ambientes, sem o prefixo de usuário do mode: development.
+experimental:
+  skip_name_prefix_for_schema: true
+
 artifacts:
   python_artifact:
     type: whl
@@ -16,8 +27,6 @@ artifacts:
 variables:
   catalog:
     description: The catalog to use
-  schema:
-    description: The schema to use
 
 targets:
   dev:
@@ -30,8 +39,7 @@ targets:
     workspace:
       host: https://dbc-52721ce8-5907.cloud.databricks.com
     variables:
-      catalog: workspace
-      schema: ${workspace.current_user.short_name}
+      catalog: grid_dev
   prod:
     mode: production
     workspace:
@@ -39,8 +47,7 @@ targets:
       # We explicitly deploy to /Workspace/Users/igornatan4@gmail.com to make sure we only have a single copy.
       root_path: /Workspace/Users/igornatan4@gmail.com/.bundle/${bundle.name}/${bundle.target}
     variables:
-      catalog: workspace
-      schema: prod
+      catalog: grid_intelligence
     permissions:
       - user_name: igornatan4@gmail.com
         level: CAN_MANAGE

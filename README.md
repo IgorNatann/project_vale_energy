@@ -44,8 +44,13 @@ Um schema por camada (`raw`, `bronze`, `silver` e `gold`), com os dados chegando
 `raw.landing`. Os ambientes `dev` e `prod` ficam isolados **por catálogo**, e os nomes dos
 schemas são os mesmos nos dois. Assim o mesmo SQL roda em qualquer ambiente.
 
-As regras de negócio (RN-01 a RN-14) e o glossário estão em
-[`prompts/00-setup.md`](prompts/00-setup.md).
+| Ambiente | Catálogo |
+|---|---|
+| `dev` | `grid_dev` |
+| `prod` | `grid_intelligence` |
+
+O domínio, o glossário, as regras de negócio e o modelo de informação estão em
+[`.llm/prd.md`](.llm/prd.md).
 
 ## Ambiente local
 
@@ -63,15 +68,65 @@ uv sync --dev
 Autentique no workspace, se ainda não fez isso:
 
 ```bash
-databricks configure --profile <perfil>
+databricks configure --profile project_vale_energy
+```
+
+## Setup do workspace
+
+### Catálogos
+
+Catálogo é a única coisa que o bundle não cria. Crie os dois por SQL: em contas com
+Default Storage (como a Free Edition), `databricks catalogs create` falha com
+`Metastore storage root URL does not exist`.
+
+```bash
+databricks experimental aitools tools query --profile project_vale_energy \
+  "CREATE CATALOG IF NOT EXISTS grid_dev COMMENT 'Catalogo de desenvolvimento da Grid Intelligence'"
+
+databricks experimental aitools tools query --profile project_vale_energy \
+  "CREATE CATALOG IF NOT EXISTS grid_intelligence COMMENT 'Catalogo de producao da Grid Intelligence'"
+```
+
+Quem cria o catálogo é dono dele. Para dar acesso a outro usuário:
+
+```bash
+databricks grants update CATALOG grid_dev \
+  --json '{"changes":[{"principal":"EMAIL","add":["ALL_PRIVILEGES"]}]}' \
+  --profile project_vale_energy
+```
+
+### Schemas e volume
+
+Os schemas `raw`, `bronze`, `silver` e `gold` e o volume `raw.landing` estão em
+[`resources/grid_schemas.yml`](resources/grid_schemas.yml) e são criados pelo deploy.
+
+### Dados
+
+Uma pasta por base no volume. A pasta, e não o arquivo, é o contrato com a camada bronze.
+
+```bash
+databricks fs cp -r data/unidades dbfs:/Volumes/grid_dev/raw/landing/unidades_consumidoras --overwrite --profile project_vale_energy
+databricks fs cp -r data/interrupcoes dbfs:/Volumes/grid_dev/raw/landing/interrupcoes --overwrite --profile project_vale_energy
+databricks fs cp -r data/consumo_diario dbfs:/Volumes/grid_dev/raw/landing/consumo_diario --overwrite --profile project_vale_energy
+databricks fs cp -r data/chamados dbfs:/Volumes/grid_dev/raw/landing/chamados --overwrite --profile project_vale_energy
+```
+
+### Recomeçar do zero
+
+> ⚠️ **Destrutivo e sem confirmação.** `CASCADE` apaga o catálogo inteiro: schemas,
+> tabelas, volumes e os arquivos dentro deles. Não há como desfazer.
+
+```bash
+databricks experimental aitools tools query --profile project_vale_energy \
+  "DROP CATALOG IF EXISTS grid_dev CASCADE"
 ```
 
 ## Deploy
 
 ```bash
-databricks bundle validate --profile <perfil>
-databricks bundle deploy -t dev --profile <perfil>
-databricks bundle run --profile <perfil>
+databricks bundle validate --profile project_vale_energy
+databricks bundle deploy -t dev --profile project_vale_energy
+databricks bundle run --profile project_vale_energy
 ```
 
 `dev` é o target padrão. Em `mode: development`, os recursos recebem o prefixo

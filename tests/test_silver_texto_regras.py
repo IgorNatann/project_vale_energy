@@ -1,4 +1,5 @@
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -37,6 +38,32 @@ def test_anonimizacao_por_regras_remove_nome_cpf_e_telefone(consultar):
 
 
 @pytest.mark.databricks
+def test_anonimizacao_por_regras_em_formatos_sinteticos(consultar):
+    """Cobre formatos previstos, nome acentuado e tratamento de texto nulo."""
+    consulta = consulta_regras(0).replace("${catalogo}.${schema_bronze}.chamados", "origem")
+    consulta = consulta.replace("${catalogo}.${schema_silver}.unidades_consumidoras", "cadastro")
+    linhas = consultar(f"""
+      WITH origem(id_chamado, id_uc, abertura, canal, duracao_segundos, origem, ingerido_em,
+                  arquivo_origem, ingerido_bronze_em, nome_solicitante, transcricao) AS (
+        VALUES ('1', 'UC1', TIMESTAMP'2026-01-01', 'telefone', 1, 'sistema', TIMESTAMP'2026-01-01',
+                'arquivo', TIMESTAMP'2026-01-01', 'José Ávila', 'José Ávila CPF 12345678909'),
+               ('2', 'UC1', TIMESTAMP'2026-01-01', 'telefone', 1, 'sistema', TIMESTAMP'2026-01-01',
+                'arquivo', TIMESTAMP'2026-01-01', 'Ana Lima', 'Ana Lima telefone 11 3456-7890'),
+               ('3', 'UC1', TIMESTAMP'2026-01-01', 'telefone', 1, 'sistema', TIMESTAMP'2026-01-01',
+                'arquivo', TIMESTAMP'2026-01-01', 'Ana Lima', CAST(NULL AS STRING))
+      ), cadastro(id_uc, id_cliente, id_conjunto, nome_conjunto, bairro, classe_consumo) AS (
+        VALUES ('UC1','C1','A','Conjunto','Bairro','residencial')
+      ), resultado AS ({consulta})
+      SELECT id_chamado, transcricao_anonimizada FROM resultado ORDER BY id_chamado
+    """)
+    assert [linha["transcricao_anonimizada"] for linha in linhas] == [
+        "[MASCARADO] CPF [MASCARADO]",
+        "[MASCARADO] telefone [MASCARADO]",
+        "[RESTRITO]",
+    ]
+
+
+@pytest.mark.databricks
 def test_classificacao_prioriza_risco_e_usa_somente_texto_anonimizado(consultar):
     """Risco à saúde prevalece sobre falta de energia e pedidos comuns de religação."""
     consulta = consulta_regras(1).replace("${catalogo}.${schema_texto}.chamados_anonimizados", "origem")
@@ -59,6 +86,74 @@ def test_classificacao_prioriza_risco_e_usa_somente_texto_anonimizado(consultar)
     assert linhas[2]["sentimento"] == "positive"
     assert str(linhas[3]["risco_desconhecido"]).lower() == "true"
     assert all(linha["enriquecido_por"] == "regras_de_texto" for linha in linhas)
+
+
+@pytest.mark.databricks
+def test_classificacao_em_exemplos_rotulados(consultar):
+    """Verifica categorias, prioridade e urgência em exemplos sintéticos revisados."""
+    consulta = consulta_regras(1).replace("${catalogo}.${schema_texto}.chamados_anonimizados", "origem")
+    linhas = consultar(f"""
+      WITH origem(id_chamado, transcricao_anonimizada) AS (
+        VALUES ('01', 'Uso oxigênio e estou sem energia.'),
+               ('02', 'A tensão oscila e queimou a geladeira.'),
+               ('03', 'A leitura não bate com a estimativa.'),
+               ('04', 'A conta veio o dobro.'),
+               ('05', 'Há um galho no poste.'),
+               ('06', 'Paguei e preciso religar.'),
+               ('07', 'Obrigado, excelente atendimento.'),
+               ('08', 'Absurdo, vou reclamar na ouvidoria.'),
+               ('09', '[RESTRITO]')
+      ), resultado AS ({consulta})
+      SELECT id_chamado, motivo, sentimento, urgencia,
+             coalesce(CAST(risco_a_saude AS STRING), 'nulo') AS risco_a_saude,
+             coalesce(CAST(ameacou_ouvidoria AS STRING), 'nulo') AS ameacou_ouvidoria
+      FROM resultado ORDER BY id_chamado
+    """)
+    esperados = [
+        ("religacao_urgente", "neutral", "alta", True, False),
+        ("oscilacao_tensao", "neutral", "baixa", False, False),
+        ("erro_leitura", "neutral", "baixa", False, False),
+        ("fatura_alta", "neutral", "baixa", False, False),
+        ("poste_avariado", "neutral", "media", False, False),
+        ("religacao", "neutral", "baixa", False, False),
+        ("duvida_cadastral", "positive", "baixa", False, False),
+        ("duvida_cadastral", "negative", "baixa", False, True),
+        ("indisponivel", "indisponivel", "indeterminada", None, None),
+    ]
+    chaves = ("motivo", "sentimento", "urgencia", "risco_a_saude", "ameacou_ouvidoria")
+
+    def valor(linha, chave):
+        dado = linha[chave]
+        if chave in ("risco_a_saude", "ameacou_ouvidoria"):
+            return {"true": True, "false": False, "nulo": None}[dado.lower()]
+        return dado
+
+    assert [tuple(valor(linha, chave) for chave in chaves) for linha in linhas] == esperados
+
+
+@pytest.mark.databricks
+@pytest.mark.reexecucao
+def test_reexecucao_regras_preserva_resultados(consultar, catalogo, perfil):
+    """Compara todas as linhas das duas tabelas após atualização sem novas entradas."""
+    if catalogo != "grid_dev":
+        pytest.fail("A reexecução está restrita ao catálogo grid_dev e ao target dev")
+
+    def estado():
+        consultas = [
+            f"SELECT '{tabela}' AS tabela, count(*) AS total, "
+            "sha2(to_json(sort_array(collect_list(to_json(struct(*))))), 256) AS resumo "
+            f"FROM `{catalogo}`.silver_regras.{tabela}"
+            for tabela in ("chamados_anonimizados", "chamados_enriquecidos")
+        ]
+        return consultar(" UNION ALL ".join(consultas) + " ORDER BY tabela")
+
+    antes = estado()
+    assert all(int(linha["total"]) > 0 for linha in antes)
+    subprocess.run(
+        ["databricks", "bundle", "run", "grid_intelligence_regras", "--target", "dev", "--profile", perfil],
+        check=True, capture_output=True, text=True, encoding="utf-8", timeout=900,
+    )
+    assert estado() == antes
 
 
 @pytest.mark.databricks

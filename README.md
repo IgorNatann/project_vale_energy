@@ -165,7 +165,7 @@ databricks bundle run processar_grid --profile project_vale_energy
 `dev` é o target padrão. Em `mode: development`, os recursos recebem o prefixo
 `[dev seu_usuario]` e os agendamentos ficam pausados. Para produção, use `-t prod`.
 
-O job executa o pipeline e reaplica as máscaras das colunas pessoais na bronze. Execute o
+O job executa o pipeline, publica a metric view e reaplica as máscaras das colunas pessoais na bronze. Execute o
 job completo: um full refresh pode recriar a tabela de chamados e remover as máscaras, e
 uma execução direta do pipeline não executa a task de governança.
 
@@ -182,8 +182,41 @@ Para executar a alternativa SQL por regras e preservar os resultados com IA, rod
 databricks bundle run grid_intelligence_regras --target dev --profile project_vale_energy
 ```
 
-O pipeline alternativo lê as tabelas existentes e publica em `silver_regras`. A gold ainda
-não foi implementada e a escolha de qual rota ela consumirá permanece em aberto.
+O pipeline alternativo lê as tabelas existentes e publica em `silver_regras`. A gold consome
+`silver.chamados_enriquecidos`, cuja rota padrão usa IA. A alternativa por regras permanece
+disponível para comparação e não é consumida automaticamente pela gold.
+
+## Camada gold
+
+O pipeline publica continuidade mensal por conjunto, prioridade de inspeção por UC, saúde
+por cliente e painel operacional por conjunto e dia. O job publica a metric view
+`gold.continuidade_metricas`, fonte única das definições de DEC e FEC.
+
+Para preencher os meses sem eventos, a continuidade cruza todos os conjuntos cadastrados
+com os meses entre a primeira e a última interrupção válida. A base de UCs é a do cadastro
+atual, não uma série histórica. Sem limites regulatórios de cada conjunto, os indicadores
+não permitem concluir se houve conformidade. `DEC` é média mensal no período selecionado;
+`DEC Acumulado` é calculado sobre a base média. Consulte essas medidas com `MEASURE()`.
+
+Os parâmetros de inspeção foram aprovados como demonstrativos: queda individual superior a 30% e variação
+absoluta do conjunto de até 10%, configuráveis no bundle. A prioridade é um sinal para
+vistoria, não uma conclusão sobre a causa. A recorrência de chamados usa a última data de
+abertura do dataset como referência para os 30 dias, e os demais totais de saúde abrangem
+todo o histórico. A prioridade exibida no painel é a fotografia do baseline mais recente,
+não uma reconstrução histórica de cada dia.
+
+`saude_cliente.ultima_fala` vem da transcrição mascarada por IA, que pode deixar dados
+identificáveis. Restrinja o acesso à gold e revise a qualidade do mascaramento antes de
+compartilhar esse texto com outras pessoas ou com o agente.
+
+Para listar os clientes com sinal alto de ouvidoria sem retornar as transcrições:
+
+```sql
+SELECT id_cliente, id_conjunto, qtd_chamados, qtd_mencoes_ouvidoria, risco_ouvidoria
+FROM grid_dev.gold.saude_cliente
+WHERE risco_ouvidoria = 'alto'
+ORDER BY qtd_mencoes_ouvidoria DESC, qtd_chamados DESC, id_cliente;
+```
 
 ## Testes
 

@@ -30,6 +30,12 @@ variables:
   duracao_minima_interrupcao:
     description: Duração mínima de interrupção, em minutos
     default: "3"
+  queda_minima_consumo:
+    description: Queda relativa da UC para sinalizar inspeção (valor demonstrativo)
+    default: "0.30"
+  variacao_maxima_conjunto:
+    description: Variação relativa máxima para considerar o conjunto estável (valor demonstrativo)
+    default: "0.10"
   usar_ia:
     description: Usa funções de IA nas transcrições quando verdadeiro
     default: "true"

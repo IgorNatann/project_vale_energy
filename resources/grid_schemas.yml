@@ -11,6 +11,10 @@ resources:
     silver:
       catalog_name: ${var.catalog}
       name: silver
+    # Isola a rota determinística para comparação sem alterar os resultados com IA.
+    silver_regras:
+      catalog_name: ${var.catalog}
+      name: silver_regras
     gold:
       catalog_name: ${var.catalog}
       name: gold

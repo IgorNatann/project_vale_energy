@@ -18,3 +18,13 @@ resources:
               catalogo: ${var.catalog}
               schema_bronze: ${resources.schemas.bronze.name}
               grupo_atendimento: ${var.grupo_atendimento}
+        - task_key: publicar_metricas
+          depends_on:
+            - task_key: executar_pipeline
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/sql/metric_view_continuidade.sql
+            parameters:
+              catalogo: ${var.catalog}
+              schema_gold: ${resources.schemas.gold.name}

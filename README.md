@@ -195,10 +195,11 @@ da bronze e silver já implantadas e atualizadas:
 uv run pytest --databricks --perfil project_vale_energy --catalogo grid_dev
 ```
 
-Sem `--databricks`, os testes que dependem do warehouse são ignorados. Para verificar também
-que uma nova execução sem arquivos novos não duplica a bronze, acrescente
-`--reexecutar-pipeline`. Essa opção executa o job no target `dev` e está restrita ao
-catálogo `grid_dev`; não faz full refresh. O comando deve ser executado na raiz do bundle.
+Sem `--databricks`, os testes que dependem do warehouse são ignorados. Acrescente
+`--reexecutar-pipeline` para verificar que uma nova execução sem arquivos novos não duplica
+a bronze e que a rota por regras preserva suas duas tabelas. Essa opção executa o job e o
+pipeline de regras no target `dev`, está restrita ao catálogo `grid_dev` e não faz full
+refresh. Execute o comando na raiz do bundle, sem alterações simultâneas nas fontes.
 
 Os testes de regras substituem as fontes de streaming por dados de teste em consultas SQL;
 eles não simulam o mecanismo de streaming. A reexecução e a comparação com os arquivos
@@ -206,6 +207,9 @@ complementam essa verificação no ambiente implantado. Os limites de consumo te
 valores demonstrativos aprovados para este projeto.
 Os testes que comparam as transcrições com a origem devem ser executados por uma identidade
 do grupo `atendimento`; eles consultam apenas contagens de dados identificáveis restantes.
+Os exemplos sintéticos rotulados verificam formatos previstos e decisões de classificação;
+não constituem uma medição de precisão sobre os chamados reais ou a rota com IA. Ainda é
+necessário validar o acesso com uma identidade fora do grupo e as permissões da landing.
 
 A rota por regras mascara o nome informado no cadastro e padrões de CPF e telefone; ela
 não identifica com segurança apelidos, outros nomes ou endereços livres. Seu resultado deve

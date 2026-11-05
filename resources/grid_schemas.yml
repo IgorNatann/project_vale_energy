@@ -1,4 +1,6 @@
 resources:
+  # Os nomes das camadas são iguais em dev e prod; o catálogo separa os ambientes.
+  # O catálogo já deve existir antes do deploy e é definido em databricks.yml.
   schemas:
     raw:
       catalog_name: ${var.catalog}
@@ -13,9 +15,11 @@ resources:
       catalog_name: ${var.catalog}
       name: gold
 
+  # O volume é gerenciado pelo Unity Catalog e recebe os Parquet de origem.
+  # Uma pasta por base em raw.landing é o contrato de entrada da bronze.
   volumes:
     landing:
       catalog_name: ${var.catalog}
-      schema_name: ${resources.schemas.raw.name}
+      schema_name: ${resources.schemas.raw.name} # Vincula o volume ao schema criado pelo bundle.
       name: landing
       volume_type: MANAGED

@@ -82,6 +82,8 @@ schemas são os mesmos nos dois. Assim o mesmo SQL roda em qualquer ambiente.
 
 O domínio, o glossário, as regras de negócio e o modelo de informação estão em
 [`.llm/prd.md`](.llm/prd.md).
+O vínculo entre cada regra, sua implementação e as evidências está em
+[`docs/regras-de-negocio.md`](docs/regras-de-negocio.md).
 
 ## Ambiente local
 
@@ -173,6 +175,15 @@ O pipeline usa `usar_ia: "true"` por padrão. Para a rota por regras, ajuste a v
 as transcrições originais. Por ser local ao workspace, o grupo não recebe privilégios do
 Unity Catalog: cada pessoa precisa ter acesso à tabela por outra concessão. As máscaras na
 bronze não substituem as permissões de acesso aos arquivos originais no volume `raw.landing`.
+
+Para executar a alternativa SQL por regras e preservar os resultados com IA, rode:
+
+```bash
+databricks bundle run grid_intelligence_regras --target dev --profile project_vale_energy
+```
+
+O pipeline alternativo lê as tabelas existentes e publica em `silver_regras`. A gold ainda
+não foi implementada e a escolha de qual rota ela consumirá permanece em aberto.
 
 ## Testes
 

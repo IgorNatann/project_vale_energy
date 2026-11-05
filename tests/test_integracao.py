@@ -62,7 +62,7 @@ def test_reexecucao_nao_duplica_bronze(consultar, catalogo, perfil):
 
     antes = estado()
     subprocess.run(
-        ["databricks", "bundle", "run", "grid_intelligence", "--target", "dev", "--profile", perfil],
+        ["databricks", "bundle", "run", "processar_grid", "--target", "dev", "--profile", perfil],
         check=True, capture_output=True, text=True, encoding="utf-8", timeout=900,
     )
     assert estado() == antes

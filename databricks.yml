@@ -27,6 +27,9 @@ artifacts:
 variables:
   catalog:
     description: The catalog to use
+  duracao_minima_interrupcao:
+    description: Duração mínima de interrupção, em minutos
+    default: "3"
 
 targets:
   dev:

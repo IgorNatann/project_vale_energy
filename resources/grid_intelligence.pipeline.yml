@@ -3,18 +3,24 @@ resources:
     grid_intelligence:
       name: grid_intelligence
       catalog: ${var.catalog}
+      # Schema padrão do pipeline; o SQL pode publicar em outras camadas parametrizadas.
       schema: ${resources.schemas.bronze.name}
+      # A execução é acionada sob demanda, com computação serverless.
       serverless: true
       continuous: false
       root_path: ../src/pipelines/grid_intelligence
+      # Inclui as transformações SQL do pipeline no diretório versionado.
       libraries:
         - glob:
             include: ../src/pipelines/grid_intelligence/transformations/**
+      # Os valores ficam disponíveis como ${nome} nas transformações SQL.
       configuration:
         catalogo: ${var.catalog}
         schema_raw: ${resources.schemas.raw.name}
         schema_bronze: ${resources.schemas.bronze.name}
         schema_silver: ${resources.schemas.silver.name}
         schema_gold: ${resources.schemas.gold.name}
+        # Auto Loader lê as pastas de cada base sob este volume.
         volume_landing: /Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.landing.name}
+        # A silver aplica a RN-01 com o limiar configurado no bundle, em minutos.
         duracao_minima_interrupcao: ${var.duracao_minima_interrupcao}

@@ -1,0 +1,20 @@
+resources:
+  jobs:
+    processar_grid:
+      name: grid_intelligence
+      performance_target: PERFORMANCE_OPTIMIZED
+      tasks:
+        - task_key: executar_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.grid_intelligence.id}
+        - task_key: aplicar_mascaras
+          depends_on:
+            - task_key: executar_pipeline
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ../src/sql/governanca_dado_pessoal.sql
+            parameters:
+              catalogo: ${var.catalog}
+              schema_bronze: ${resources.schemas.bronze.name}
+              grupo_atendimento: ${var.grupo_atendimento}

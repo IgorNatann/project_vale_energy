@@ -22,4 +22,5 @@ If the CLI is not installed, see: https://docs.databricks.com/dev-tools/cli/inst
 
 ## Project Instructions
 
-<!-- Add your project-specific instructions, coding conventions, or notes here -->
+- Nomeie funções em português do Brasil, sem acentos, usando `snake_case`. Preserve os
+  nomes exigidos por bibliotecas e ferramentas, como o prefixo `test_` e os hooks `pytest_*`.

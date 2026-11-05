@@ -70,6 +70,8 @@ não serve, mesmo que seja mais robusto.
 
 - Todo texto e todo nome em **português do Brasil**; entidades, colunas e arquivos **sem
   acentuação**.
+- Funções usam nomes em português do Brasil, sem acentos e em `snake_case`, preservando
+  nomes exigidos por ferramentas, como `test_` e os hooks `pytest_*`.
 - **Nenhum catálogo fixado em código**: vem de `${var.catalog}`. Schema vem de
   `${resources.schemas.<camada>.name}`.
 - **Nenhum modelo de IA fixado em código**: use as funções `ai_*` do Databricks.

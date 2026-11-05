@@ -24,3 +24,5 @@ resources:
         volume_landing: /Volumes/${var.catalog}/${resources.schemas.raw.name}/${resources.volumes.landing.name}
         # A silver aplica a RN-01 com o limiar configurado no bundle, em minutos.
         duracao_minima_interrupcao: ${var.duracao_minima_interrupcao}
+        usar_ia: ${var.usar_ia}
+        pipelines.externalMetadata.enabled: "true"

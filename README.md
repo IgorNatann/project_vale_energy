@@ -157,11 +157,22 @@ databricks experimental aitools tools query --profile project_vale_energy \
 ```bash
 databricks bundle validate --profile project_vale_energy
 databricks bundle deploy -t dev --profile project_vale_energy
-databricks bundle run --profile project_vale_energy
+databricks bundle run processar_grid --profile project_vale_energy
 ```
 
 `dev` é o target padrão. Em `mode: development`, os recursos recebem o prefixo
 `[dev seu_usuario]` e os agendamentos ficam pausados. Para produção, use `-t prod`.
+
+O job executa o pipeline e reaplica as máscaras das colunas pessoais na bronze. Execute o
+job completo: um full refresh pode recriar a tabela de chamados e remover as máscaras, e
+uma execução direta do pipeline não executa a task de governança.
+
+O pipeline usa `usar_ia: "true"` por padrão. Para a rota por regras, ajuste a variável
+`usar_ia` do bundle para `"false"` antes do deploy. A máscara de acesso usa o grupo local
+`atendimento`; a identidade que executa o pipeline precisa pertencer a ele para processar
+as transcrições originais. Por ser local ao workspace, o grupo não recebe privilégios do
+Unity Catalog: cada pessoa precisa ter acesso à tabela por outra concessão. As máscaras na
+bronze não substituem as permissões de acesso aos arquivos originais no volume `raw.landing`.
 
 ## Testes
 
@@ -175,10 +186,16 @@ uv run pytest --databricks --perfil project_vale_energy --catalogo grid_dev
 
 Sem `--databricks`, os testes que dependem do warehouse são ignorados. Para verificar também
 que uma nova execução sem arquivos novos não duplica a bronze, acrescente
-`--reexecutar-pipeline`. Essa opção executa o pipeline no target `dev` e está restrita ao
+`--reexecutar-pipeline`. Essa opção executa o job no target `dev` e está restrita ao
 catálogo `grid_dev`; não faz full refresh. O comando deve ser executado na raiz do bundle.
 
 Os testes de regras substituem as fontes de streaming por dados de teste em consultas SQL;
 eles não simulam o mecanismo de streaming. A reexecução e a comparação com os arquivos
 complementam essa verificação no ambiente implantado. Os limites de consumo testados são os
 valores demonstrativos aprovados para este projeto.
+Os testes que comparam as transcrições com a origem devem ser executados por uma identidade
+do grupo `atendimento`; eles consultam apenas contagens de dados identificáveis restantes.
+
+A rota por regras mascara o nome informado no cadastro e padrões de CPF e telefone; ela
+não identifica com segurança apelidos, outros nomes ou endereços livres. Seu resultado deve
+ser avaliado antes de ser usado como texto anonimizado.

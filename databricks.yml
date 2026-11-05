@@ -30,6 +30,14 @@ variables:
   duracao_minima_interrupcao:
     description: Duração mínima de interrupção, em minutos
     default: "3"
+  usar_ia:
+    description: Usa funções de IA nas transcrições quando verdadeiro
+    default: "true"
+  grupo_atendimento:
+    description: Grupo autorizado a consultar dados pessoais dos chamados
+    default: atendimento
+  warehouse_id:
+    description: SQL warehouse para a aplicação das máscaras de acesso
 
 targets:
   dev:
@@ -43,6 +51,7 @@ targets:
       host: https://dbc-52721ce8-5907.cloud.databricks.com
     variables:
       catalog: grid_dev
+      warehouse_id: cd126800c459c7c6
   prod:
     mode: production
     workspace:
@@ -51,6 +60,7 @@ targets:
       root_path: /Workspace/Users/igornatan4@gmail.com/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: grid_intelligence
+      warehouse_id: cd126800c459c7c6
     permissions:
       - user_name: igornatan4@gmail.com
         level: CAN_MANAGE

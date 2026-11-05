@@ -1,0 +1,17 @@
+resources:
+  pipelines:
+    grid_intelligence_regras:
+      name: grid_intelligence_regras
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.silver_regras.name}
+      serverless: true
+      continuous: false
+      root_path: ../src/pipelines/grid_intelligence_regras
+      libraries:
+        - glob:
+            include: ../src/pipelines/grid_intelligence_regras/transformations/**
+      configuration:
+        catalogo: ${var.catalog}
+        schema_bronze: ${resources.schemas.bronze.name}
+        schema_silver: ${resources.schemas.silver.name}
+        schema_texto: ${resources.schemas.silver_regras.name}

@@ -20,7 +20,7 @@ A construção segue uma sequência de prompts para o Claude Code, descrita em
 | `databricks.yml` | Definição do bundle: variáveis e targets `dev` e `prod` |
 | `resources/` | Recursos do bundle (schemas, volume, pipelines, jobs, dashboard) |
 | `src/project_vale_energy/` | Código Python compartilhado por jobs e pipelines |
-| `tests/` | Testes unitários |
+| `tests/` | Testes de regras e integração com Databricks |
 | `fixtures/` | Dados de apoio para testes |
 | `data/` | As quatro bases sintéticas em Parquet, para subir no volume |
 | `prompts/` | A sequência de prompts que constrói o projeto |
@@ -165,6 +165,20 @@ databricks bundle run --profile project_vale_energy
 
 ## Testes
 
+Os testes executam o SQL das transformações sobre exemplos pequenos e comparam as tabelas
+bronze com os Parquet do volume. Requerem a CLI autenticada, um SQL warehouse e as tabelas
+da bronze e silver já implantadas e atualizadas:
+
 ```bash
-uv run pytest
+uv run pytest --databricks --perfil project_vale_energy --catalogo grid_dev
 ```
+
+Sem `--databricks`, os testes que dependem do warehouse são ignorados. Para verificar também
+que uma nova execução sem arquivos novos não duplica a bronze, acrescente
+`--reexecutar-pipeline`. Essa opção executa o pipeline no target `dev` e está restrita ao
+catálogo `grid_dev`; não faz full refresh. O comando deve ser executado na raiz do bundle.
+
+Os testes de regras substituem as fontes de streaming por dados de teste em consultas SQL;
+eles não simulam o mecanismo de streaming. A reexecução e a comparação com os arquivos
+complementam essa verificação no ambiente implantado. Os limites de consumo testados são os
+valores demonstrativos aprovados para este projeto.

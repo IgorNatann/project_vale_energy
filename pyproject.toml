@@ -32,3 +32,10 @@ packages = ["src/project_vale_energy"]
 
 [tool.ruff]
 line-length = 120
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "databricks: requer acesso a um SQL warehouse do Databricks",
+    "reexecucao: executa novamente o pipeline de desenvolvimento",
+]

@@ -40,6 +40,37 @@ validações de qualidade terem o que fazer.
 
 ## Arquitetura
 
+O diagrama apresenta a **arquitetura planejada**: o setup da infraestrutura vem primeiro;
+as camadas de dados e as entregas são construídas nos prompts seguintes.
+
+```mermaid
+flowchart LR
+    dados["📁 Dados Parquet<br/>UCs · interrupções<br/>consumo diário · chamados"]
+
+    subgraph databricks["☁️ Databricks · um catálogo por ambiente"]
+        direction LR
+        raw["📥 Raw<br/>Volume landing"]
+        bronze["🥉 Bronze<br/>Ingestão fiel<br/>Auto Loader"]
+        silver["🥈 Silver<br/>Limpeza e regras<br/>Anonimização"]
+        gold["🥇 Gold<br/>Continuidade · inspeção<br/>clientes · operação"]
+        metricas["📐 Metric view<br/>Definição de DEC e FEC"]
+
+        raw --> bronze --> silver --> gold --> metricas
+    end
+
+    painel["📊 Dashboard AI/BI"]
+    agente["🤖 Agente Genie"]
+    relatorio["📄 Relatório executivo"]
+
+    dados --> raw
+    gold --> painel
+    gold --> agente
+    gold --> relatorio
+    metricas --> painel
+    metricas --> agente
+    metricas --> relatorio
+```
+
 Um schema por camada (`raw`, `bronze`, `silver` e `gold`), com os dados chegando no volume
 `raw.landing`. Os ambientes `dev` e `prod` ficam isolados **por catálogo**, e os nomes dos
 schemas são os mesmos nos dois. Assim o mesmo SQL roda em qualquer ambiente.

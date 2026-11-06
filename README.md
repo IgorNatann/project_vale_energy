@@ -218,6 +218,19 @@ WHERE risco_ouvidoria = 'alto'
 ORDER BY qtd_mencoes_ouvidoria DESC, qtd_chamados DESC, id_cliente;
 ```
 
+## Dashboard AI/BI
+
+O [dashboard versionado](src/dashboards/grid_intelligence.lvdash.json) é implantado pelo
+[recurso do bundle](resources/grid_intelligence.dashboard.yml). A página de operação mostra
+os últimos 30 dias disponíveis, e o filtro de período afeta a série e os indicadores de
+eventos. As ações são do último dia disponível e o DEC vem da metric view para o último mês.
+
+A página de inspeção e clientes apresenta prioridades como sinais para visita, não como
+conclusões sobre sua causa. A contagem de UCs é uma fotografia do baseline mais recente,
+sem histórico para uma tendência. A última fala passou por mascaramento automático, que
+pode deixar dados identificáveis. O dashboard publicado usa as permissões de cada usuário;
+antes de conceder acesso, avalie as permissões da gold e o conteúdo das transcrições.
+
 ## Testes
 
 Os testes executam o SQL das transformações sobre exemplos pequenos e comparam as tabelas

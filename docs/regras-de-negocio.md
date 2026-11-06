@@ -16,7 +16,7 @@ desenvolvimento, não indicadores reais de uma distribuidora.
 | RN-09 | Remover dados pessoais antes da análise de conteúdo. | [Rota com IA](../src/pipelines/grid_intelligence/transformations/13_silver_chamados.py) e [rota por regras](../src/pipelines/grid_intelligence_regras/transformations/13_silver_chamados.sql): a tabela enriquecida lê a anonimizada. | Na rota com IA, sete textos sem resposta de anonimização foram mantidos como `[RESTRITO]`. |
 | RN-10 | A leitura do nome, telefone e texto original precisa de controle de acesso separado da anonimização. | [Governança](../src/sql/governanca_dado_pessoal.sql): máscaras por grupo na bronze, reaplicadas pelo job. | A vinculação das três máscaras e o acesso do membro autorizado foram verificados; falta testar uma identidade fora do grupo. |
 | RN-04 e RN-14 | DEC/FEC têm definição única e as entidades gold levam descrição de negócio. | A tabela de continuidade guarda insumos e a metric view contém as medidas. | A base considera o cadastro atual e inclui meses sem eventos no período observado. |
-| RN-13 | O agente deve acessar apenas a gold. | A configurar na etapa do agente. | Ainda não implementado. |
+| RN-13 | O agente deve acessar apenas a gold. | [Definição do Genie](../src/genie/grid_intelligence.json): quatro fontes gold configuradas. | Os SQLs observados nos testes consultaram somente gold; a restrição de fontes não substitui as permissões do usuário. |
 
 ## Limites demonstrativos de consumo
 
@@ -79,5 +79,5 @@ exige avaliação: detectar os padrões conhecidos não prova ausência de todo 
 Os arquivos originais no volume exigem permissões próprias, pois a máscara da tabela bronze
 não protege o acesso direto a eles.
 
-RN-03 permanece sem definição nos materiais do projeto. RN-07 e RN-08, sobre a natureza
-explicável e não acusatória da prioridade de inspeção, serão aplicadas na etapa gold.
+RN-03 permanece sem definição nos materiais do projeto. RN-07 e RN-08 orientam a prioridade
+explicável e não acusatória implementada na gold e as instruções do Genie.

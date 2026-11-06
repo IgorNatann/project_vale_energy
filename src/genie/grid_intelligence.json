@@ -1,0 +1,73 @@
+{
+  "version": 2,
+  "config": {
+    "sample_questions": [
+      {"id": "10000000000000000000000000000001", "question": ["Resuma o que aconteceu em Campinas nas últimas 24 horas e diga o que precisa de ação hoje"]},
+      {"id": "10000000000000000000000000000002", "question": ["Qual foi o DEC e o FEC de cada conjunto no último mês?"]},
+      {"id": "10000000000000000000000000000003", "question": ["Quais bairros concentram unidades com prioridade alta de inspeção?"]},
+      {"id": "10000000000000000000000000000004", "question": ["Quais clientes estão em risco de abrir reclamação na ouvidoria?"]},
+      {"id": "10000000000000000000000000000005", "question": ["Quantos chamados com risco à saúde tivemos na última semana, e em quais conjuntos?"]}
+    ]
+  },
+  "data_sources": {
+    "metric_views": [
+      {"identifier": "${catalogo}.gold.continuidade_metricas", "description": ["Fonte única das medidas governadas DEC e FEC. O mês é o mês de início do evento. A base de UCs é a do cadastro atual, não histórica."]}
+    ],
+    "tables": [
+      {"identifier": "${catalogo}.gold.painel_operacional_dia", "description": ["Uma linha por conjunto e dia, com interrupções, chamados, consumo e ação recomendada."],
+       "column_configs": [
+         {"column_name": "acao_recomendada", "description": ["Ação sugerida por ordem de prioridade operacional."]},
+         {"column_name": "chamados_risco_saude", "description": ["Chamados com sinal textual de risco à saúde, não diagnóstico confirmado."]},
+         {"column_name": "consumo_kwh", "description": ["Consumo total das leituras válidas daquele conjunto e dia em kWh."]},
+         {"column_name": "dia", "description": ["Data dos eventos. Para período recente use a última data com interrupções ou chamados no dataset, não a data atual."]},
+         {"column_name": "inspecoes_prioridade_alta", "description": ["Fotografia atual do baseline repetida nos dias. Não somar entre datas nem tratar como histórico."]},
+         {"column_name": "municipio", "enable_entity_matching": true, "enable_format_assistance": true, "synonyms": ["cidade"]},
+         {"column_name": "nome_conjunto", "enable_entity_matching": true, "enable_format_assistance": true, "synonyms": ["região", "conjunto"]},
+         {"column_name": "qtd_chamados", "description": ["Número de chamados registrados no conjunto e dia."]},
+         {"column_name": "uc_horas_interrompidas", "description": ["Soma de duração em horas multiplicada pelo número de UCs afetadas. Não é DEC."]}
+       ]},
+      {"identifier": "${catalogo}.gold.prioridade_inspecao_uc", "description": ["Uma linha por UC candidata a visita técnica. Prioridade é um sinal explicável, nunca uma conclusão sobre causa ou autoria."],
+       "column_configs": [
+         {"column_name": "bairro", "enable_entity_matching": true, "enable_format_assistance": true},
+         {"column_name": "id_uc", "description": ["Unidade consumidora ou ponto de entrega. Não é cliente."]},
+         {"column_name": "motivo_observado", "description": ["Evidência observada para a prioridade de inspeção."]},
+         {"column_name": "nome_conjunto", "enable_entity_matching": true, "enable_format_assistance": true},
+         {"column_name": "prioridade_inspecao", "description": ["Prioridade de visita: alta, media ou baixa."], "enable_entity_matching": true, "synonyms": ["prioridade de visita"]},
+         {"column_name": "variacao_da_uc", "description": ["Variação relativa do consumo recente da UC frente ao próprio baseline."]},
+         {"column_name": "variacao_do_conjunto", "description": ["Variação relativa do consumo do conjunto, usada para verificar estabilidade da vizinhança."]}
+       ]},
+      {"identifier": "${catalogo}.gold.saude_cliente", "description": ["Uma linha por cliente, que pode ter várias UCs. Sinais de atendimento acumulados no histórico e classificação de risco de ouvidoria."],
+       "column_configs": [
+         {"column_name": "id_cliente", "description": ["Identificador do cliente, não da UC."]},
+         {"column_name": "qtd_mencoes_ouvidoria", "description": ["Número de menções no histórico completo. Sem janela de tempo; não permite chamá-las de recentes."]},
+         {"column_name": "qtd_ucs_com_chamado", "description": ["Quantidade de UCs distintas do cliente com chamados."]},
+         {"column_name": "risco_ouvidoria", "description": ["Sinal de risco: alto, medio ou baixo. Não é uma previsão validada."], "enable_entity_matching": true},
+         {"column_name": "ultima_fala", "exclude": true}
+       ]}
+    ]
+  },
+  "instructions": {
+    "example_question_sqls": [
+      {"id": "20000000000000000000000000000001", "question": ["Resuma o que aconteceu em Campinas nas últimas 24 horas e diga o que precisa de ação hoje"],
+       "sql": ["WITH data_final AS (SELECT max(p.dia) AS dia FROM ${catalogo}.gold.painel_operacional_dia p WHERE p.qtd_interrupcoes > 0 OR p.qtd_chamados > 0), metricas AS (SELECT m.`Conjunto` AS nome_conjunto, MEASURE(m.`DEC`) AS dec_horas, MEASURE(m.`FEC`) AS fec FROM ${catalogo}.gold.continuidade_metricas m WHERE m.`Mes` = date_trunc('MONTH', (SELECT d.dia FROM data_final d)) GROUP BY ALL) SELECT p.dia, p.nome_conjunto, p.qtd_interrupcoes, p.uc_horas_interrompidas, p.qtd_chamados, (SELECT avg(h.qtd_chamados) FROM ${catalogo}.gold.painel_operacional_dia h WHERE h.id_conjunto = p.id_conjunto AND h.dia >= date_sub(p.dia, 30) AND h.dia < p.dia) AS media_chamados_30_dias, p.consumo_kwh, p.chamados_risco_saude, p.mencoes_ouvidoria, m.dec_horas, m.fec, p.acao_recomendada FROM ${catalogo}.gold.painel_operacional_dia p CROSS JOIN data_final d LEFT JOIN metricas m ON m.nome_conjunto = p.nome_conjunto WHERE p.dia = d.dia AND p.municipio = 'Campinas' ORDER BY p.nome_conjunto"]},
+      {"id": "20000000000000000000000000000002", "question": ["Qual foi o DEC e o FEC de cada conjunto no último mês?"],
+       "sql": ["SELECT m.`Conjunto`, MEASURE(m.`DEC`) AS dec_horas, MEASURE(m.`FEC`) AS fec FROM ${catalogo}.gold.continuidade_metricas m WHERE m.`Mes` = (SELECT max(x.`Mes`) FROM ${catalogo}.gold.continuidade_metricas x) GROUP BY ALL ORDER BY m.`Conjunto`"]},
+      {"id": "20000000000000000000000000000003", "question": ["Quais bairros concentram unidades com prioridade alta de inspeção?"],
+       "sql": ["SELECT p.bairro, count(*) AS unidades FROM ${catalogo}.gold.prioridade_inspecao_uc p WHERE p.prioridade_inspecao = 'alta' GROUP BY p.bairro ORDER BY unidades DESC, p.bairro"]},
+      {"id": "20000000000000000000000000000004", "question": ["Quais clientes estão em risco de abrir reclamação na ouvidoria?"],
+       "sql": ["SELECT c.id_cliente, c.nome_conjunto, c.bairro, c.qtd_chamados, c.qtd_ucs_com_chamado, c.qtd_mencoes_ouvidoria, c.risco_ouvidoria FROM ${catalogo}.gold.saude_cliente c WHERE c.risco_ouvidoria = 'alto' ORDER BY c.qtd_mencoes_ouvidoria DESC, c.qtd_chamados DESC, c.id_cliente"]}
+    ],
+    "text_instructions": [
+      {"id": "30000000000000000000000000000001", "content": [
+        "Responda em português do Brasil, usando apenas as quatro fontes gold fornecidas. Não consulte bronze, silver nem tabelas subjacentes à metric view.",
+        "UC é ponto de entrega e não cliente. Perguntas sobre clientes usam saude_cliente; perguntas sobre pontos de entrega e visitas usam prioridade_inspecao_uc. Um conjunto é uma região operacional.",
+        "DEC é duração média de interrupção por UC em horas; FEC é frequência média de interrupções por UC. PNT significa perdas não técnicas. A definição única de DEC e FEC fica em continuidade_metricas: use MEASURE(`DEC`) e MEASURE(`FEC`) com GROUP BY ALL. Nunca recalcule essas métricas manualmente.",
+        "Para investigar uma região: identifique conjunto e dia no painel, compare o número diário de chamados com a média diária dos 30 dias anteriores, mostre ambos os números e verifique se está acima ou abaixo antes de concluir. Na resposta, mostre em uma tabela por conjunto todos os valores numéricos de interrupções, consumo em kWh, sinais de risco à saúde, menções à ouvidoria, DEC em horas e FEC do mês pela metric view. Não omita campos com valor zero. Termine pela ação recomendada. Não atribua causalidade sem evidência.",
+        "Últimas 24 horas significa o último dia com interrupções ou chamados no painel, não current_date(). Última semana são os sete dias até esse último dia, inclusive. Último mês é o mês mais recente da metric view.",
+        "Prioridade de inspeção não é acusação e não prova causa, responsabilidade ou irregularidade. Para perguntas em termos acusatórios, explique a diferença e execute uma consulta listando UCs de prioridade alta com bairro e motivo observado. Apresente os resultados como candidatos a visita, sem acusar clientes e sem esperar confirmação para listar.",
+        "O dataset é sintético. Limiares de inspeção são demonstrativos e configuráveis. A base de UCs usada em continuidade é o cadastro atual, não histórico. Não há limites regulatórios nem referências para rotular DEC ou FEC como altos, baixos ou conformes: informe apenas os valores. O número de inspeções no painel é um retrato atual repetido, nunca some esse valor entre dias.",
+        "Os sinais de risco à saúde e ouvidoria vêm de classificação automática e não confirmam diagnóstico ou reclamação. Risco alto de ouvidoria pode resultar de menção explícita ou de reincidência com tom negativo. Nunca generalize características dos primeiros exemplos para todos os clientes sem verificá-las em SQL, como dizer que todos têm múltiplos chamados. As contagens de menções na saúde do cliente abrangem todo o histórico e não podem ser chamadas de recentes. Não reproduza transcrições nem exponha dados pessoais; responda com indicadores ou identificadores necessários."
+      ]}
+    ]
+  }
+}

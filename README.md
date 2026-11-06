@@ -231,6 +231,29 @@ sem histórico para uma tendência. A última fala passou por mascaramento autom
 pode deixar dados identificáveis. O dashboard publicado usa as permissões de cada usuário;
 antes de conceder acesso, avalie as permissões da gold e o conteúdo das transcrições.
 
+## Agente Genie
+
+O [copiloto de operações](src/genie/grid_intelligence.json) responde em português usando
+somente as quatro fontes gold configuradas: a metric view de continuidade e as tabelas de
+operações, prioridade de inspeção e saúde do cliente. O campo de transcrição é excluído do
+contexto do agente; essa configuração não substitui as permissões do Unity Catalog.
+
+Para criar ou atualizar o espaço de desenvolvimento, use a CLI autenticada:
+
+```bash
+uv run python scripts/aplicar_agente_genie.py --perfil project_vale_energy \
+  --catalogo grid_dev --warehouse-id cd126800c459c7c6
+```
+
+O aplicador procura o espaço pelo título e só atualiza automaticamente quando as fontes
+correspondem às da definição. `--space-id` seleciona explicitamente um espaço existente;
+`--titulo` permite criar outro espaço, por exemplo para outro ambiente no mesmo workspace.
+O catálogo é substituído ao aplicar e não fica fixado na definição versionada.
+
+Os testes de conversação, SQL gerado e limitações estão em
+[validação do agente](docs/validacao-agente-genie.md). As respostas de linguagem natural
+podem variar entre execuções: confira SQL, números e contexto antes de usar uma conclusão.
+
 ## Testes
 
 Os testes executam o SQL das transformações sobre exemplos pequenos e comparam as tabelas

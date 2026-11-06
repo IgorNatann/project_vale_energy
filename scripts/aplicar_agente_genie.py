@@ -28,6 +28,11 @@ def enviar_json(metodo, caminho, payload, perfil):
         return executar_cli(["api", metodo, caminho, "--json", f"@{arquivo}"], perfil)
 
 
+def obter_warehouse_padrao(perfil):
+    """Usa o warehouse padrão do workspace quando nenhum é informado."""
+    return executar_cli(["experimental", "aitools", "tools", "get-default-warehouse"], perfil)["id"]
+
+
 def preparar_definicao(catalogo):
     """Substitui o catálogo validado sem incluir identificadores fixos no JSON."""
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", catalogo):
@@ -60,7 +65,7 @@ def principal():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--perfil", required=True, help="Perfil autenticado da CLI Databricks")
     parser.add_argument("--catalogo", required=True, help="Catálogo com as tabelas gold")
-    parser.add_argument("--warehouse-id", required=True, help="SQL warehouse para as consultas do Genie")
+    parser.add_argument("--warehouse-id", help="SQL warehouse para as consultas do Genie (padrão: o do workspace)")
     parser.add_argument("--titulo", default=TITULO, help="Título usado para localizar ou criar o espaço")
     parser.add_argument("--space-id", help="Atualiza explicitamente um espaço existente")
     parser.add_argument("--parent-path", help="Pasta existente para criar um novo espaço")
@@ -68,7 +73,8 @@ def principal():
 
     definicao = preparar_definicao(args.catalogo)
     identificador = args.space_id or identificar_espaco(args.perfil, definicao, args.titulo)
-    payload = {"serialized_space": json.dumps(definicao, ensure_ascii=False), "warehouse_id": args.warehouse_id}
+    warehouse_id = args.warehouse_id or obter_warehouse_padrao(args.perfil)
+    payload = {"serialized_space": json.dumps(definicao, ensure_ascii=False), "warehouse_id": warehouse_id}
     if identificador:
         resposta = enviar_json("patch", f"/api/2.0/genie/spaces/{identificador}", payload, args.perfil)
         acao = "atualizado"

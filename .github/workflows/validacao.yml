@@ -1,0 +1,31 @@
+name: Validacao do projeto
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  testes-locais:
+    name: Lint e testes sem workspace
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      UV_PYTHON: "3.12"
+    steps:
+      - name: Obter codigo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+      - name: Instalar dependencias do lockfile
+        run: uv sync --locked --dev
+      - name: Verificar lint
+        run: uv run --locked ruff check src tests scripts
+      - name: Executar testes locais
+        run: uv run --locked pytest -q

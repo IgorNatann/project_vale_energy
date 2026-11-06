@@ -63,5 +63,4 @@ maior data de abertura disponível, não necessariamente o dia de hoje.
 O Genie usa essas fontes Gold para compor consultas e respostas; uma consulta correta não
 garante uma síntese fiel. Há casos observados de omissão e generalização indevida em
 [validação do Genie](validacao-agente-genie.md). Revise a consulta, o resultado e a
-interpretação antes de agir. O significado da RN-03 ainda não foi fornecido e não foi
-presumido.
+interpretação antes de agir.

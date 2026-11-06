@@ -37,7 +37,7 @@ Use estes termos, sem sinônimo aproximado.
 |---|---|
 | **RN-01** | Só interrupções com **3 minutos ou mais** entram na apuração de DEC e FEC. A regra vive na camada de transformação, nunca no relatório |
 | **RN-02** | O numerador do DEC é `duracao_horas × qtd_ucs_afetadas` (`uc_horas_interrompidas`), calculado na silver |
-| **RN-03** | *A definir.* Não aparece em nenhum prompt da sequência |
+| **RN-03** | O numerador do FEC é a soma de `qtd_ucs_afetadas` dos eventos válidos (`uc_interrupcoes`): cada UC atingida conta uma interrupção |
 | **RN-04** | DEC e FEC têm **uma única definição** no sistema, consumida por dashboard, agente e relatório |
 | **RN-05** | DEC e FEC são apurados **por mês** (`mes_apuracao = date_trunc('MONTH', inicio)`) |
 | **RN-06** | Uma UC é candidata a inspeção quando o consumo cai em **dois eixos simultâneos**: contra o próprio baseline **e** enquanto a vizinhança permanece estável. Só o primeiro eixo apontaria o bairro inteiro depois de um apagão |
@@ -51,7 +51,9 @@ Use estes termos, sem sinônimo aproximado.
 | **RN-14** | As entidades da **camada gold** carregam descrição em linguagem de negócio, que é o que o agente lê. Bronze e silver não precisam: são passagem |
 
 RN-02, RN-05 e RN-08 não estão no prompt 00. Os enunciados acima vêm de onde são
-aplicadas, nos prompts 02 e 04.
+aplicadas, nos prompts 02 e 04. A RN-03 não aparece em nenhum prompt: foi definida no
+projeto como a contraparte da RN-02 para o FEC, documentando o cálculo já implementado na
+gold e na metric view.
 
 ## Diretriz de simplicidade
 

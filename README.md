@@ -274,6 +274,21 @@ sem histórico para uma tendência. A última fala passou por mascaramento autom
 pode deixar dados identificáveis. O dashboard publicado usa as permissões de cada usuário;
 antes de conceder acesso, avalie as permissões da gold e o conteúdo das transcrições.
 
+### Capturas do dashboard
+
+As imagens abaixo mostram as duas páginas do dashboard no ambiente de desenvolvimento.
+Elas usam dados sintéticos; a tabela de atendimento contém identificadores de exemplo e
+trechos mascarados, o que não comprova que um mascaramento seria seguro para dados reais.
+
+**Operação do dia** — período disponível, indicadores, DEC por conjunto e ações do dia.
+
+![Dashboard Grid Intelligence: operação do dia](screenshots/dash_2.png)
+
+**Inspeção e atendimento** — prioridades por bairro, detalhes de visita e sinais de
+ouvidoria por cliente.
+
+![Dashboard Grid Intelligence: inspeção e atendimento](screenshots/dash_1.png)
+
 ## Agente Genie
 
 O [copiloto de operações](src/genie/grid_intelligence.json) responde em português usando

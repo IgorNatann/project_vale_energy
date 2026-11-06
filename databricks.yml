@@ -18,11 +18,6 @@ sync:
 experimental:
   skip_name_prefix_for_schema: true
 
-artifacts:
-  python_artifact:
-    type: whl
-    build: uv build --wheel
-
 # Variable declarations. These variables are assigned in the dev/prod targets below.
 variables:
   catalog:

@@ -517,7 +517,7 @@ wheels = [
 [[package]]
 name = "project-vale-energy"
 version = "0.0.1"
-source = { editable = "." }
+source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [

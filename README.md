@@ -2,6 +2,8 @@
 
 Plataforma de dados e IA de uma distribuidora de energia elétrica fictícia, a **Luz do Vale
 Distribuidora S.A.**, construída no Databricks com Declarative Automation Bundles (DABs).
+O objetivo é demonstrar, com dados sintéticos, como decisões de negócio se transformam em
+dados governados, indicadores e ferramentas de apoio à operação.
 
 O projeto ataca três dores de uma distribuidora regulada pela ANEEL:
 
@@ -12,6 +14,37 @@ O projeto ataca três dores de uma distribuidora regulada pela ANEEL:
 
 A construção segue uma sequência de prompts para o Claude Code, descrita em
 [`prompts/README.md`](prompts/README.md).
+
+## Desenvolvimento com IA
+
+O desenvolvimento contou com assistentes de código e ferramentas do ecossistema
+[Databricks AI Dev Kit](https://github.com/databricks-solutions/ai-dev-kit), também
+referenciado como AI Dev Kit 2.0. Nesta evolução, foram usadas as **Databricks AI Tools**
+e suas skills oficiais para orientar tarefas de CLI, pipelines, Unity Catalog, dashboard
+e Genie, além de executar consultas e verificar recursos no workspace. As instruções das
+skills apoiam o trabalho do assistente; decisões de negócio, revisão dos resultados e
+validação por testes continuam necessárias.
+
+As skills oficiais são instaladas pela CLI com `databricks aitools install`; consulte a
+[documentação de agent skills da Databricks](https://docs.databricks.com/aws/en/agent-skills/)
+para opções e compatibilidade. A própria documentação recomenda remover skills antigas do
+AI Dev Kit antes de instalar as oficiais, evitando conflitos. A ferramenta de desenvolvimento
+é distinta do agente Genie entregue como parte do projeto.
+
+## O que este projeto demonstra
+
+| Pergunta de negócio | Decisão aplicada | Como verificar |
+|---|---|---|
+| Como acompanhar a continuidade do fornecimento? | Excluir eventos inferiores a três minutos e centralizar DEC e FEC em uma metric view. | [Métricas e exemplos](docs/metricas-e-ia.md) e [regras e evidências](docs/regras-de-negocio.md). |
+| Onde priorizar visitas técnicas? | Comparar o consumo da UC com seu histórico e o conjunto, combinando os sinais com o medidor. | [Regras e evidências](docs/regras-de-negocio.md). A prioridade não comprova irregularidade. |
+| Como analisar chamados protegendo dados pessoais? | Restringir o acesso ao original e anonimizar antes do enriquecimento por IA ou regras. | [Validação de privacidade](docs/validacao-privacidade.md) e [regras das duas rotas](docs/regras-de-negocio.md). |
+| Como apoiar a leitura operacional? | Publicar a Gold em dashboard, Genie e relatório executivo. | [Resultados da demonstração](docs/resultados-demonstracao.md), [avaliação do Genie](docs/avaliacao-genie.md) e [roteiro de apresentação](docs/roteiro-apresentacao.md). |
+
+No ambiente de desenvolvimento, foram observadas 20 UCs de prioridade alta e 84 clientes
+com sinal alto de risco de ouvidoria em uma execução. Esses números descrevem a amostra
+sintética, podem mudar entre execuções e não são conclusões sobre pessoas reais. A regra
+RN-03 ainda não foi definida; o teste de acesso por identidade fora do grupo de atendimento
+permanece pendente. Resultados gerados por IA devem ser revisados.
 
 ## Estrutura
 
@@ -46,8 +79,9 @@ validações de qualidade terem o que fazer.
 
 ## Arquitetura
 
-O diagrama apresenta a **arquitetura planejada**: o setup da infraestrutura vem primeiro;
-as camadas de dados e as entregas são construídas nos prompts seguintes.
+O diagrama resume as camadas e entregas implementadas no projeto. A rota alternativa de
+tratamento de texto por regras publica em `silver_regras` para comparação; a Gold usa a
+silver principal.
 
 ```mermaid
 flowchart LR
@@ -126,13 +160,9 @@ databricks experimental aitools tools query --profile project_vale_energy \
   "CREATE CATALOG IF NOT EXISTS grid_intelligence COMMENT 'Catalogo de producao da Grid Intelligence'"
 ```
 
-Quem cria o catálogo é dono dele. Para dar acesso a outro usuário:
-
-```bash
-databricks grants update CATALOG grid_dev \
-  --json '{"changes":[{"principal":"EMAIL","add":["ALL_PRIVILEGES"]}]}' \
-  --profile project_vale_energy
-```
+Quem cria o catálogo é dono dele. Para outras identidades, conceda somente os privilégios
+necessários após revisar também o acesso ao volume e às tabelas; veja
+[validação de privacidade](docs/validacao-privacidade.md).
 
 ### Schemas e volume
 

@@ -12,6 +12,7 @@ def pytest_addoption(parser):
     """Configura o acesso aos testes no workspace e a reexecução opcional em dev."""
     parser.addoption("--databricks", action="store_true", help="Executa testes no Databricks")
     parser.addoption("--perfil", default="project_vale_energy", help="Perfil da CLI Databricks")
+    parser.addoption("--perfil-nao-atendimento", default=None, help="Perfil de teste fora do grupo atendimento")
     parser.addoption("--catalogo", default="grid_dev", help="Catálogo com as tabelas implantadas")
     parser.addoption("--reexecutar-pipeline", action="store_true", help="Reexecuta o pipeline em dev")
 
@@ -37,6 +38,17 @@ def catalogo(request):
 @pytest.fixture(scope="session")
 def perfil(request):
     return request.config.getoption("--perfil")
+
+
+@pytest.fixture(scope="session")
+def perfil_nao_atendimento(request):
+    """Exige uma identidade independente para o teste de acesso restrito."""
+    valor = request.config.getoption("--perfil-nao-atendimento")
+    if not valor:
+        pytest.skip("Informe --perfil-nao-atendimento para testar uma segunda identidade")
+    if valor == request.config.getoption("--perfil"):
+        pytest.fail("O perfil fora do atendimento deve ser diferente do perfil de referência")
+    return valor
 
 
 @pytest.fixture(scope="session")

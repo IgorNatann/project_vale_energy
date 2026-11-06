@@ -111,6 +111,22 @@ para comparação.
 O vínculo entre cada regra, sua implementação e as evidências está em
 [regras de negócio](docs/regras-de-negocio.md).
 
+## Minhas decisões e extensões
+
+O projeto partiu de uma sequência de prompts de aula ([`prompts/`](prompts/README.md)), que
+define o domínio, as regras e as entregas. Os pontos abaixo foram decisões minhas, além do
+roteiro:
+
+| Extensão | Por quê |
+|---|---|
+| [Testes de regras e integração](tests/) | Entregar uma regra não prova que ela funciona. Os testes executam o SQL das transformações sobre casos pequenos e comparam a bronze com os arquivos de origem. |
+| [Integração contínua](docs/integracao-continua.md) | Lint e testes rodam em todo PR, sem credenciais do Databricks no GitHub. |
+| [Aplicador do Genie](scripts/aplicar_agente_genie.py) | O espaço Genie não é recurso do bundle. O script o recria a partir da definição versionada, sem catálogo fixo e sem sobrescrever um espaço com outras fontes. |
+| Rota `silver_regras` em paralelo | Permite comparar a rota com IA e a rota determinística sobre os mesmos dados, sem que uma sobrescreva a outra. |
+| [Validação de privacidade](docs/validacao-privacidade.md) | Mascarar não basta: é preciso verificar quem consegue ler o original, e registrar o que ainda não foi provado. |
+| [Avaliação do Genie](docs/avaliacao-genie.md) | Perguntas de benchmark com respostas SQL esperadas, separadas dos exemplos do agente: 6 de 6 corretas em uma execução. |
+| [Observabilidade e custos](docs/observabilidade-custos.md) | Sucesso do job não é qualidade, e duração não é custo. A consulta às tabelas de sistema mostra o consumo faturável. |
+
 ## Dashboard, agente e relatório
 
 **Dashboard AI/BI**: duas páginas, operação do dia (acima) e inspeção e atendimento:
@@ -120,6 +136,8 @@ O vínculo entre cada regra, sua implementação e as evidências está em
 **Agente Genie**: o [copiloto de operações](src/genie/grid_intelligence.json) responde em
 português usando somente as fontes da gold. O campo de transcrição fica fora do contexto do
 agente. Os testes de conversação estão em [validação do agente](docs/validacao-agente-genie.md).
+
+![Agente Genie respondendo qual conjunto teve o maior DEC no último mês](screenshots/genie.png)
 
 **Relatório executivo**: o [notebook](src/notebooks/relatorio_executivo.py) lê somente a
 gold e gera um resumo para a diretoria. Veja uma

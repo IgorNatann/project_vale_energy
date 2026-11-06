@@ -299,9 +299,12 @@ contexto do agente; essa configuração não substitui as permissões do Unity C
 Para criar ou atualizar o espaço de desenvolvimento, use a CLI autenticada:
 
 ```bash
-uv run python scripts/aplicar_agente_genie.py --perfil project_vale_energy \
-  --catalogo grid_dev --warehouse-id cd126800c459c7c6
+uv run python scripts/aplicar_agente_genie.py --perfil project_vale_energy --catalogo grid_dev
 ```
+
+Sem `--warehouse-id`, o aplicador usa o warehouse padrão do workspace. Para escolher outro,
+liste os disponíveis com `databricks warehouses list --profile project_vale_energy` e
+informe `--warehouse-id <WAREHOUSE_ID>`.
 
 O aplicador procura o espaço pelo título e só atualiza automaticamente quando as fontes
 correspondem às da definição. `--space-id` seleciona explicitamente um espaço existente;

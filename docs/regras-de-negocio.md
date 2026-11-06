@@ -11,6 +11,7 @@ desenvolvimento, não indicadores reais de uma distribuidora.
 | Cadastro | Padronizar a classe e identificar bairros ausentes sem inventar dados. UCs sem chave ou conjunto são descartadas. | [Cadastro silver](../src/pipelines/grid_intelligence/transformations/10_silver_cadastro.sql): `lower`, `trim`, `coalesce` e `WHERE`. | 4.000 UCs na execução verificada. |
 | RN-01 | Só eventos de pelo menos 3 minutos participam de DEC e FEC; eventos curtos continuam na bronze. | [Interrupções silver](../src/pipelines/grid_intelligence/transformations/11_silver_interrupcoes.sql): limiar na configuração do pipeline. | 310 de 1.383 eventos ficaram fora da silver; 1.073 permaneceram. |
 | RN-02 e RN-05 | O insumo aditivo de DEC é horas de interrupção multiplicadas pelas UCs afetadas; a apuração é mensal. | Interrupções silver calcula `uc_horas_interrompidas` e `mes_apuracao` por evento. | Cálculo conferido para os 1.073 eventos válidos. |
+| RN-03 | O insumo aditivo de FEC é a quantidade de UCs afetadas: cada UC atingida conta uma interrupção. | [Continuidade gold](../src/pipelines/grid_intelligence/transformations/20_gold_continuidade.sql) soma `qtd_ucs_afetadas` em `uc_interrupcoes`; a [metric view](../src/sql/metric_view_continuidade.sql) divide pelo total de UCs. | Definida no projeto como contraparte da RN-02; não consta da sequência de prompts. |
 | Consumo | Leituras nulas, negativas ou acima do limite demonstrativo da classe não entram na silver; duplicatas mantêm a ingestão mais recente. | [Consumo silver](../src/pipelines/grid_intelligence/transformations/12_silver_consumo.sql): `WHERE`, `CASE` e `row_number`. | 5.801.814 leituras; nenhuma chave UC × dia repetida na execução verificada. |
 | RN-06 a RN-08 | Comparar a UC com seu próprio histórico e com a variação do conjunto. A saída é uma prioridade explicável de visita técnica. | O baseline usa os últimos 30 dias e os 90 anteriores. A gold compara os dois eixos e o sinal do medidor. | Limiares demonstrativos aprovados e configuráveis: queda superior a 30% e variação do conjunto de até 10%. |
 | RN-09 | Remover dados pessoais antes da análise de conteúdo. | [Rota com IA](../src/pipelines/grid_intelligence/transformations/13_silver_chamados.py) e [rota por regras](../src/pipelines/grid_intelligence_regras/transformations/13_silver_chamados.sql): a tabela enriquecida lê a anonimizada. | Na rota com IA, sete textos sem resposta de anonimização foram mantidos como `[RESTRITO]`. |
@@ -79,5 +80,5 @@ exige avaliação: detectar os padrões conhecidos não prova ausência de todo 
 Os arquivos originais no volume exigem permissões próprias, pois a máscara da tabela bronze
 não protege o acesso direto a eles.
 
-RN-03 permanece sem definição nos materiais do projeto. RN-07 e RN-08 orientam a prioridade
+RN-07 e RN-08 orientam a prioridade
 explicável e não acusatória implementada na gold e as instruções do Genie.

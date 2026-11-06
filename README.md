@@ -212,7 +212,7 @@ transformações sobre exemplos pequenos e comparam a bronze com os Parquet do v
 - O mascaramento por IA pode deixar dados identificáveis, e a rota por regras não reconhece
   apelidos nem endereços livres. Revise antes de compartilhar o texto anonimizado.
 - Falta validar o acesso com uma identidade fora do grupo `atendimento` e as permissões
-  da landing. A regra RN-03 ainda não foi definida.
+  da landing.
 - Respostas de linguagem natural do Genie e textos gerados por IA variam entre execuções e
   devem ser revisados.
 
@@ -226,7 +226,12 @@ Unity Catalog, dashboard e Genie, além de executar consultas e verificar recurs
 workspace. As skills apoiam o trabalho do assistente; decisões de negócio, revisão dos
 resultados e validação por testes continuam necessárias.
 
-As skills oficiais são instaladas com `databricks aitools install`; consulte a
+O projeto foi desenvolvido com o plugin Databricks AI Tools v0.2.41. As skills oficiais são
+instaladas com `databricks aitools install`; consulte a
 [documentação de agent skills da Databricks](https://docs.databricks.com/aws/en/agent-skills/)
 para opções e compatibilidade. A ferramenta de desenvolvimento é distinta do agente Genie
 entregue como parte do projeto.
+
+## Licença
+
+Distribuído sob a [licença MIT](LICENSE).

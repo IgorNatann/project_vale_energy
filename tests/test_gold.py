@@ -86,10 +86,10 @@ def test_painel_preserva_dias_de_cada_origem_e_prioriza_risco(consultar):
         consulta = consulta.replace(f'${{catalogo}}.${{schema_silver}}.{tabela}', tabela)
     consulta = consulta.replace('${catalogo}.${schema_gold}.prioridade_inspecao_uc', 'prioridade_inspecao_uc')
     linhas = consultar(f"""
-      WITH interrupcoes_validas(id_conjunto, data_evento, uc_horas_interrompidas) AS (
-        VALUES ('A', DATE'2026-01-01', 2.0), ('A', DATE'2026-01-03', 1.0)
-      ), chamados_enriquecidos(id_conjunto, data_chamado, risco_a_saude, ameacou_ouvidoria) AS (
-        VALUES ('A', DATE'2026-01-02', false, true), ('A', DATE'2026-01-03', true, true)
+      WITH interrupcoes_validas(id_conjunto, data_evento, uc_horas_interrompidas, duracao_horas, causa) AS (
+        VALUES ('A', DATE'2026-01-01', 2.0, 2.0, 'climatica'), ('A', DATE'2026-01-03', 1.0, 1.0, 'equipamento')
+      ), chamados_enriquecidos(id_conjunto, data_chamado, risco_a_saude, ameacou_ouvidoria, sentimento) AS (
+        VALUES ('A', DATE'2026-01-02', false, true, 'negative'), ('A', DATE'2026-01-03', true, true, 'neutral')
       ), consumo_diario(id_conjunto, data, consumo_kwh) AS (
         VALUES ('A', DATE'2026-01-04', 10.0)
       ), unidades_consumidoras(id_conjunto, nome_conjunto, municipio) AS (
@@ -97,7 +97,8 @@ def test_painel_preserva_dias_de_cada_origem_e_prioriza_risco(consultar):
       ), prioridade_inspecao_uc(id_conjunto, prioridade_inspecao) AS (
         VALUES ('A', 'alta')
       ), resultado AS ({consulta})
-      SELECT dia, qtd_interrupcoes, qtd_chamados, leituras, acao_recomendada FROM resultado ORDER BY dia
+      SELECT dia, qtd_interrupcoes, qtd_chamados, leituras, acao_recomendada,
+             maior_duracao_horas, causa_predominante, chamados_negativos FROM resultado ORDER BY dia
     """)
     assert [(int(linha['qtd_interrupcoes']), int(linha['qtd_chamados']), int(linha['leituras'])) for linha in linhas] == [
         (1, 0, 0), (0, 1, 0), (1, 1, 0), (0, 0, 1)
@@ -108,6 +109,9 @@ def test_painel_preserva_dias_de_cada_origem_e_prioriza_risco(consultar):
         'Priorizar atendimento com sinal de risco à saúde',
         'Planejar inspeções prioritárias',
     ]
+    assert float(linhas[0]['maior_duracao_horas']) == 2.0
+    assert linhas[0]['causa_predominante'] == 'climatica'
+    assert int(linhas[1]['chamados_negativos']) == 1
 
 
 def test_metricas_dec_media_e_acumulado_em_dois_meses(consultar, catalogo):

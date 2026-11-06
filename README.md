@@ -20,6 +20,12 @@ A construção segue uma sequência de prompts para o Claude Code, descrita em
 | `databricks.yml` | Definição do bundle: variáveis e targets `dev` e `prod` |
 | `resources/` | Recursos do bundle (schemas, volume, pipelines, jobs, dashboard) |
 | `src/project_vale_energy/` | Código Python compartilhado por jobs e pipelines |
+| `src/pipelines/` | Transformações bronze, silver e gold |
+| `src/notebooks/` | Notebook do relatório executivo |
+| `src/sql/` | Governança, metric view e consultas de demonstração |
+| `src/dashboards/` e `src/genie/` | Definições versionadas do dashboard e do agente |
+| `scripts/` | Aplicador do espaço Genie |
+| `docs/` | Regras, resultados de demonstração e validação do agente |
 | `tests/` | Testes de regras e integração com Databricks |
 | `fixtures/` | Dados de apoio para testes |
 | `data/` | As quatro bases sintéticas em Parquet, para subir no volume |
@@ -131,7 +137,13 @@ databricks grants update CATALOG grid_dev \
 ### Schemas e volume
 
 Os schemas `raw`, `bronze`, `silver` e `gold` e o volume `raw.landing` estão em
-[`resources/grid_schemas.yml`](resources/grid_schemas.yml) e são criados pelo deploy.
+[`resources/grid_schemas.yml`](resources/grid_schemas.yml). Depois de criar os catálogos,
+faça um primeiro deploy para criar os recursos antes de copiar os arquivos:
+
+```bash
+databricks bundle validate --strict -t dev --profile project_vale_energy
+databricks bundle deploy -t dev --profile project_vale_energy
+```
 
 ### Dados
 
@@ -165,7 +177,8 @@ databricks bundle run processar_grid --profile project_vale_energy
 `dev` é o target padrão. Em `mode: development`, os recursos recebem o prefixo
 `[dev seu_usuario]` e os agendamentos ficam pausados. Para produção, use `-t prod`.
 
-O job executa o pipeline, publica a metric view e reaplica as máscaras das colunas pessoais na bronze. Execute o
+O job executa o pipeline, publica a metric view, reaplica as máscaras das colunas pessoais
+na bronze e gera o relatório executivo de Campinas. Execute o
 job completo: um full refresh pode recriar a tabela de chamados e remover as máscaras, e
 uma execução direta do pipeline não executa a task de governança.
 
@@ -253,6 +266,27 @@ O catálogo é substituído ao aplicar e não fica fixado na definição version
 Os testes de conversação, SQL gerado e limitações estão em
 [validação do agente](docs/validacao-agente-genie.md). As respostas de linguagem natural
 podem variar entre execuções: confira SQL, números e contexto antes de usar uma conclusão.
+
+## Relatório executivo e demonstração
+
+O [notebook do relatório](src/notebooks/relatorio_executivo.py) lê somente a gold. A data
+de referência é o último dia com chamados ou interrupções; se não houver movimento para a
+região nessa data, ele interrompe com uma mensagem. O job executa o notebook após o pipeline,
+a governança e a metric view. O resultado aparece na saída da task `gerar_relatorio`; uma
+[execução de exemplo](docs/relatorio-executivo-exemplo.md) está registrada no projeto.
+
+Com `usar_ia: "true"`, o notebook solicita o texto a `ai_gen` e aceita a resposta somente
+quando ela reproduz o gabarito factual, admitindo diferenças de espaços. Se a IA falhar ou
+alterar o conteúdo, o gabarito é usado e o método é registrado. Com `usar_ia: "false"`,
+usa-se diretamente o mesmo gabarito. Assim, a formatação do relatório não autoriza uma IA
+a acrescentar valores. O parâmetro do bundle também altera a rota silver, portanto use um
+ambiente apropriado ao alterá-lo.
+
+As oito consultas estão em [demonstracao.sql](src/sql/demonstracao.sql); informe o parâmetro
+`catalogo` no SQL warehouse. Seus resultados e ressalvas estão em
+[resultados da demonstração](docs/resultados-demonstracao.md). A quinta consulta retorna uma
+transcrição original e deve ser executada somente por quem tem acesso autorizado à bronze;
+não salve esse texto no repositório.
 
 ## Testes
 

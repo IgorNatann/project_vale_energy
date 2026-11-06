@@ -2,10 +2,12 @@ CREATE OR REFRESH MATERIALIZED VIEW ${catalogo}.${schema_gold}.painel_operaciona
 COMMENT 'Eventos diários por conjunto. A prioridade de inspeção reflete o último baseline disponível, não o histórico do dia.'
 AS WITH interrupcoes AS (
   SELECT id_conjunto, data_evento AS dia, count(*) AS qtd_interrupcoes,
-    sum(uc_horas_interrompidas) AS uc_horas_interrompidas
+    sum(uc_horas_interrompidas) AS uc_horas_interrompidas,
+    max(duracao_horas) AS maior_duracao_horas, mode(causa, true) AS causa_predominante
   FROM ${catalogo}.${schema_silver}.interrupcoes_validas GROUP BY id_conjunto, data_evento
 ), chamados AS (
   SELECT id_conjunto, data_chamado AS dia, count(*) AS qtd_chamados,
+    count_if(sentimento = 'negative') AS chamados_negativos,
     count_if(risco_a_saude) AS chamados_risco_saude, count_if(ameacou_ouvidoria) AS mencoes_ouvidoria
   FROM ${catalogo}.${schema_silver}.chamados_enriquecidos GROUP BY id_conjunto, data_chamado
 ), consumo AS (
@@ -16,7 +18,9 @@ AS WITH interrupcoes AS (
     coalesce(i.dia, c.dia, d.dia) AS dia,
     coalesce(i.qtd_interrupcoes, 0) AS qtd_interrupcoes,
     coalesce(i.uc_horas_interrompidas, 0) AS uc_horas_interrompidas,
-    coalesce(c.qtd_chamados, 0) AS qtd_chamados, coalesce(c.chamados_risco_saude, 0) AS chamados_risco_saude,
+    i.maior_duracao_horas, i.causa_predominante,
+    coalesce(c.qtd_chamados, 0) AS qtd_chamados, coalesce(c.chamados_negativos, 0) AS chamados_negativos,
+    coalesce(c.chamados_risco_saude, 0) AS chamados_risco_saude,
     coalesce(c.mencoes_ouvidoria, 0) AS mencoes_ouvidoria, d.consumo_kwh, coalesce(d.leituras, 0) AS leituras
   FROM interrupcoes i FULL OUTER JOIN chamados c ON i.id_conjunto = c.id_conjunto AND i.dia = c.dia
   FULL OUTER JOIN consumo d ON coalesce(i.id_conjunto, c.id_conjunto) = d.id_conjunto AND coalesce(i.dia, c.dia) = d.dia

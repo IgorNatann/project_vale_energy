@@ -28,3 +28,14 @@ resources:
             parameters:
               catalogo: ${var.catalog}
               schema_gold: ${resources.schemas.gold.name}
+        - task_key: gerar_relatorio
+          depends_on:
+            - task_key: aplicar_mascaras
+            - task_key: publicar_metricas
+          notebook_task:
+            notebook_path: ../src/notebooks/relatorio_executivo.py
+            base_parameters:
+              catalogo: ${var.catalog}
+              schema_gold: ${resources.schemas.gold.name}
+              regiao: Campinas
+              usar_ia: ${var.usar_ia}

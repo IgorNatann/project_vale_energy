@@ -9,6 +9,94 @@
       {"id": "10000000000000000000000000000005", "question": ["Quantos chamados com risco à saúde tivemos na última semana, e em quais conjuntos?"]}
     ]
   },
+  "benchmarks": {
+    "questions": [
+      {
+        "id": "40000000000000000000000000000001",
+        "question": [
+          "Quantas unidades com prioridade alta existem em cada conjunto?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT nome_conjunto, count(*) AS unidades FROM ${catalogo}.gold.prioridade_inspecao_uc WHERE prioridade_inspecao = 'alta' GROUP BY nome_conjunto"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "40000000000000000000000000000002",
+        "question": [
+          "Quantos clientes com risco alto de ouvidoria existem por conjunto?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT nome_conjunto, count(*) AS clientes FROM ${catalogo}.gold.saude_cliente WHERE risco_ouvidoria = 'alto' GROUP BY nome_conjunto"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "40000000000000000000000000000003",
+        "question": [
+          "Qual o DEC por conjunto no mês mais recente?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT m.`Conjunto`, MEASURE(m.`DEC`) AS dec FROM ${catalogo}.gold.continuidade_metricas m WHERE m.`Mes` = (SELECT max(x.`Mes`) FROM ${catalogo}.gold.continuidade_metricas x) GROUP BY ALL"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "40000000000000000000000000000004",
+        "question": [
+          "Qual o FEC por conjunto no mês mais recente?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT m.`Conjunto`, MEASURE(m.`FEC`) AS fec FROM ${catalogo}.gold.continuidade_metricas m WHERE m.`Mes` = (SELECT max(x.`Mes`) FROM ${catalogo}.gold.continuidade_metricas x) GROUP BY ALL"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "40000000000000000000000000000005",
+        "question": [
+          "Quantos chamados foram registrados por conjunto na última data com eventos?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT p.nome_conjunto, p.qtd_chamados FROM ${catalogo}.gold.painel_operacional_dia p WHERE p.dia = (SELECT max(x.dia) FROM ${catalogo}.gold.painel_operacional_dia x WHERE x.qtd_interrupcoes > 0 OR x.qtd_chamados > 0)"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "40000000000000000000000000000006",
+        "question": [
+          "Quantas unidades há por prioridade de inspeção no bairro Jardim Aurora?"
+        ],
+        "answer": [
+          {
+            "format": "SQL",
+            "content": [
+              "SELECT prioridade_inspecao, count(*) AS unidades FROM ${catalogo}.gold.prioridade_inspecao_uc WHERE bairro = 'Jardim Aurora' GROUP BY prioridade_inspecao"
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "data_sources": {
     "metric_views": [
       {"identifier": "${catalogo}.gold.continuidade_metricas", "description": ["Fonte única das medidas governadas DEC e FEC. O mês é o mês de início do evento. A base de UCs é a do cadastro atual, não histórica."]}

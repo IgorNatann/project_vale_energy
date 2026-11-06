@@ -50,6 +50,22 @@ def test_preparacao_valida_catalogo_e_substitui_marcador():
         APLICADOR.preparar_definicao("grid_dev.gold")
 
 
+def test_benchmark_possui_consultas_e_identificadores_validos():
+    """A bateria diagnóstica tem respostas SQL e não expõe fontes fora da Gold."""
+    dados = json.loads(ARQUIVO.read_text(encoding="utf-8"))
+    perguntas = dados["benchmarks"]["questions"]
+    ids = [item["id"] for item in perguntas]
+    assert len(perguntas) == 6
+    assert ids == sorted(set(ids))
+    assert all(len(identificador) == 32 and all(c in "0123456789abcdef" for c in identificador) for identificador in ids)
+    for item in perguntas:
+        assert item["question"][0]
+        resposta = item["answer"][0]
+        assert resposta["format"] == "SQL"
+        assert resposta["content"][0].startswith("SELECT ")
+        assert "${catalogo}.gold." in resposta["content"][0]
+
+
 def test_identificacao_nao_sobrescreve_espaco_com_fontes_diferentes(monkeypatch):
     """Um espaço homônimo com fontes incompatíveis exige identificação explícita."""
     definicao = APLICADOR.preparar_definicao("grid_dev")

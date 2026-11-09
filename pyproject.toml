@@ -1,7 +1,7 @@
 [project]
 name = "project_vale_energy"
 version = "0.0.1"
-authors = [{ name = "igornatan4@gmail.com" }]
+authors = [{ name = "Igor Natan" }]
 requires-python = ">=3.12,<3.13"
 dependencies = [
     # Any dependencies for jobs and pipelines in this project can be added here

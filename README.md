@@ -30,9 +30,11 @@ Uma distribuidora regulada pela ANEEL tem três dores, todas mensuráveis em din
 
 1. **Continuidade do fornecimento.** Interrupções além do limite regulatório geram
    compensação automática ao consumidor: mais de R$ 1,1 bilhão pagos pelas distribuidoras
-   brasileiras em 2024.
+   brasileiras em 2024
+   ([ANEEL, via Cenário Energia](https://cenarioenergia.com.br/2026/04/15/qualidade-do-fornecimento-melhora-no-brasil-mas-compensacoes-ainda-superam-r-1-bilhao-aponta-aneel/)).
 2. **Perdas não técnicas.** Energia distribuída e não faturada somou ~R$ 11,5 bilhões em
-   2025.
+   2025
+   ([ANEEL, via Poder360](https://www.poder360.com.br/poder-energia/furtos-e-falhas-tecnicas-na-rede-eletrica-custam-r-232-bilhoes-em-2025/)).
 3. **Atendimento ao cliente.** As transcrições das ligações trazem o aviso antecipado de
    reclamações na ouvidoria, mas ninguém as lê.
 
@@ -219,18 +221,12 @@ transformações sobre exemplos pequenos e comparam a bronze com os Parquet do v
 ## Desenvolvimento com IA
 
 O projeto foi construído com assistentes de código, a partir da sequência de prompts em
-[`prompts/`](prompts/README.md), e com ferramentas do ecossistema
-[Databricks AI Dev Kit](https://github.com/databricks-solutions/ai-dev-kit). Foram usadas as
-**Databricks AI Tools** e suas skills oficiais para orientar tarefas de CLI, pipelines,
-Unity Catalog, dashboard e Genie, além de executar consultas e verificar recursos no
-workspace. As skills apoiam o trabalho do assistente; decisões de negócio, revisão dos
-resultados e validação por testes continuam necessárias.
-
-O projeto foi desenvolvido com o plugin Databricks AI Tools v0.2.41. As skills oficiais são
-instaladas com `databricks aitools install`; consulte a
-[documentação de agent skills da Databricks](https://docs.databricks.com/aws/en/agent-skills/)
-para opções e compatibilidade. A ferramenta de desenvolvimento é distinta do agente Genie
-entregue como parte do projeto.
+[`prompts/`](prompts/README.md), usando as **Databricks AI Tools** v0.2.41 e suas
+[skills oficiais](https://docs.databricks.com/aws/en/agent-skills/) (instaladas com
+`databricks aitools install`) para CLI, pipelines, Unity Catalog, dashboard e Genie. As
+skills apoiam o assistente; as decisões de negócio, a revisão dos resultados e a validação
+por testes foram feitas à parte. Essa ferramenta de desenvolvimento não se confunde com o
+agente Genie entregue pelo projeto.
 
 ## Licença
 

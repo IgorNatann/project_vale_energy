@@ -186,6 +186,7 @@ transformações sobre exemplos pequenos e comparam a bronze com os Parquet do v
 | [Integração contínua](docs/integracao-continua.md) | O que o CI verifica e o que não verifica |
 | [Roteiro de apresentação](docs/roteiro-apresentacao.md) | Sequência para demonstrar o projeto |
 | [PRD](.llm/prd.md) | Domínio, glossário, regras e modelo de informação |
+| [Escopo](.llm/escopo.md) | O que cada prompt pedia, o que foi entregue e o que ficou fora |
 
 ## Estrutura
 
